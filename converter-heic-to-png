@@ -10,21 +10,24 @@ fi
 convert_heic_to_png() {
     local file_path="$1"
     if [ -f "$file_path" ]; then
-        sips -s format png "$file_path" --out "${file_path%.heic}.png"
+        sips -s format png "$file_path" --out "${file_path%.*}.png"
     fi
 }
 
-# Recursive function to process files in a directory
-process_files() {
+# Function to process files in a directory
+process_files_in_directory() {
     local dir="$1"
     for file in "$dir"/*; do
         if [ -d "$file" ]; then
-            process_files "$file"
-        elif [ -f "$file" ] && [[ "$file" == *.heic ]]; then
+            echo "Entering directory: $file"
+            cd "$file" || exit
+            process_files_in_directory "$(pwd)"
+            cd ..
+        elif [ -f "$file" ] && [[ "$(echo "$file" | tr '[:upper:]' '[:lower:]')" == *.heic ]]; then
             convert_heic_to_png "$file"
         fi
     done
 }
 
 # Start processing files in the current directory
-process_files "$(pwd)"
+process_files_in_directory "$(pwd)"
